@@ -11,6 +11,12 @@ from .help_app import CheckUser
 
 @auth.verify_password
 def verify_password(username, password):
+    """
+    :param username: имя пользователя
+    :param password: пароль пользователя
+    :return: есть такой пользователь или нет (bool)
+    проверка авторизации пользователя (используется Basic Auth)
+    """
     us = db_session.query(User).filter_by(username=username).first()
     if us and check_password_hash(us.password, password):
         return True
@@ -18,6 +24,11 @@ def verify_password(username, password):
 
 
 def error(func):
+    """
+    :param func: имя функции
+    :return: результат работы функции или ошибку
+    Декоратор для приметивной обработки ошибок (плохая реализация, доработать)
+    """
     def warp(*args, **kwargs):
         try:
             return func(*args, **kwargs)
@@ -27,8 +38,17 @@ def error(func):
 
 
 class RegisterView(Resource):
+    """
+    Класс регистрации
+    url - /register/
+    Поддерживаемые методы - ['POST']
+    """
     @error
-    def get(self):
+    def post(self, *args, **kwargs):
+        """
+        :return: Ошибка или подтверждение о прохождении регистрации
+        Метод регистрации пользователя
+        """
         passwd = generate_password_hash(request.args.get('passwd', None))
         email, username = self.check_data()
         print(email, username, passwd)
@@ -39,7 +59,11 @@ class RegisterView(Resource):
         db_session.commit()
         return {'register': 'True'}, 200
 
-    def check_data(self):
+    def check_data(self, *args, **kwargs):
+        """
+        :return: Ошибку или готовые данные - майл и имя пользователя
+        Проверяет валидность майла и имя пользователя
+        """
         email, us = request.args.get('email', None), request.args.get('username', None)
         if validate_email(email):
             if db_session.query(User).filter_by(email=email).first():
@@ -52,13 +76,26 @@ class RegisterView(Resource):
 
 
 class PostsView(Resource, Serialize, CheckUser):
+    """
+    Класс для работы с постами
+    url - /post/
+    Поддерживаемые методы - ['GET', 'POST', 'PUT', 'DELETE']
+    """
     @error
     def get(self, *args, **kwargs):
+        """
+        :return: Все посты из БД
+        """
+        # добавить сортировку по юзеру
         return jsonify(self.post_serialize(db_session.query(Posts).all()))
 
     @error
     @auth.login_required
-    def post(self):
+    def post(self, *args, **kwargs):
+        """
+        :return: Ошибку или подтверждение добавления поста
+        QueryString параметры - title, content
+        """
         author_id = db_session.query(User).filter_by(username=auth.username()).first().id
         title = request.args.get('title', None)
         content = request.args.get('content', None)
@@ -73,7 +110,11 @@ class PostsView(Resource, Serialize, CheckUser):
 
     @error
     @auth.login_required
-    def put(self):
+    def put(self, *args, **kwargs):
+        """
+        :return: ошибку или подтверждение изменения данных
+        QueryString параметры - posts_id, title, content
+        """
         posts_id = request.args.get('posts_id', None)
         title = request.args.get('title', None)
         content = request.args.get('content', None)
@@ -87,7 +128,11 @@ class PostsView(Resource, Serialize, CheckUser):
 
     @error
     @auth.login_required
-    def delete(self):
+    def delete(self, *args, **kwargs):
+        """
+        :return: ошибку или подтверждение о удалении поста
+        QueryString параметры - posts_id
+        """
         posts_id = request.args.get('posts_id', None)
         if self.check_post(posts_id, auth.username()):
             data = db_session.query(Posts).filter_by(id=posts_id).first()
@@ -99,12 +144,20 @@ class PostsView(Resource, Serialize, CheckUser):
 
 class CommentView(Resource, Serialize, CheckUser):
     @error
-    def get(self):
+    def get(self, *args, **kwargs):
+        """
+        :return: Все комментарии
+        """
+        # добаить фильтрацию по посту или юзеру
         return jsonify(self.comment_serialize(db_session.query(Comments).all()))
 
     @error
     @auth.login_required
-    def post(self):
+    def post(self, *args, **kwargs):
+        """
+        :return: ошибку или подтверждение создания комментария
+        QueryString параметры - post_id, title, content
+        """
         post_id = request.args.get('post_id', None)
         author_id = db_session.query(User).filter_by(username=auth.username()).first().id
         title = request.args.get('title', None)
@@ -122,7 +175,11 @@ class CommentView(Resource, Serialize, CheckUser):
 
     @error
     @auth.login_required
-    def put(self):
+    def put(self, *args, **kwargs):
+        """
+        :return: ошибку или подтверждение о изменении комментария
+        QueryString параметры - comment_id, title, content
+        """
         comment_id = request.args.get('comment_id', None)
         title = request.args.get('title', None)
         content = request.args.get('content', None)
@@ -136,7 +193,11 @@ class CommentView(Resource, Serialize, CheckUser):
 
     @error
     @auth.login_required
-    def delete(self):
+    def delete(self, *args, **kwargs):
+        """
+        :return: ошибку или подтверждение о удалении комментария
+        QueryString параметры - comment_id
+        """
         comment_id = request.args.get('comment_id', None)
         if self.check_post(comment_id, auth.username()):
             data = db_session.query(Posts).filter_by(id=comment_id).first()
