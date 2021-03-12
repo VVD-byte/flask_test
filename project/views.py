@@ -51,7 +51,6 @@ class RegisterView(Resource):
         """
         passwd = generate_password_hash(request.args.get('passwd', None))
         email, username = self.check_data()
-        print(email, username, passwd)
         if None in [email, username]:
             return (email or username), 404
         u = User(email, username, passwd)
@@ -65,6 +64,8 @@ class RegisterView(Resource):
         Проверяет валидность майла и имя пользователя
         """
         email, us = request.args.get('email', None), request.args.get('username', None)
+        if None in [email, us]:
+            return {'error': 'null email or username'}, None
         if validate_email(email):
             if db_session.query(User).filter_by(email=email).first():
                 return {'error': 'user with such mail is already registered'}, None
