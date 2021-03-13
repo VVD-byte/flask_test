@@ -45,5 +45,11 @@ class Comments(Base):
     content = Column(String(1000), nullable=False)
     publication_datetime = Column(DateTime, default=datetime.utcnow())
 
+    def __init__(self, post_id=None, author_id=None, title=None, content=None):
+        self.post_id = post_id
+        self.author_id = author_id
+        self.title = title
+        self.content = content
+
     def __repr__(self):
         return f'<User {self.id}>'

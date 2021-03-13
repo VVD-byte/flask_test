@@ -19,6 +19,7 @@ def verify_password(username, password):
     """
     us = db_session.query(User).filter_by(username=username).first()
     if us and check_password_hash(us.password, password):
+        print(username, password)
         return True
     return False
 
@@ -116,7 +117,7 @@ class PostsView(Resource, Serialize, CheckUser):
         :return: ошибку или подтверждение изменения данных
         QueryString параметры - posts_id, title, content
         """
-        posts_id = request.args.get('posts_id', None)
+        posts_id = int(request.args.get('post_id', None))
         title = request.args.get('title', None)
         content = request.args.get('content', None)
         if self.check_post(posts_id, auth.username()) and None not in [title, content]:
@@ -134,7 +135,7 @@ class PostsView(Resource, Serialize, CheckUser):
         :return: ошибку или подтверждение о удалении поста
         QueryString параметры - posts_id
         """
-        posts_id = request.args.get('posts_id', None)
+        posts_id = int(request.args.get('post_id', None))
         if self.check_post(posts_id, auth.username()):
             data = db_session.query(Posts).filter_by(id=posts_id).first()
             db_session.delete(data)
@@ -159,7 +160,7 @@ class CommentView(Resource, Serialize, CheckUser):
         :return: ошибку или подтверждение создания комментария
         QueryString параметры - post_id, title, content
         """
-        post_id = request.args.get('post_id', None)
+        post_id = int(request.args.get('post_id', None))
         author_id = db_session.query(User).filter_by(username=auth.username()).first().id
         title = request.args.get('title', None)
         content = request.args.get('content', None)
@@ -181,7 +182,7 @@ class CommentView(Resource, Serialize, CheckUser):
         :return: ошибку или подтверждение о изменении комментария
         QueryString параметры - comment_id, title, content
         """
-        comment_id = request.args.get('comment_id', None)
+        comment_id = int(request.args.get('comment_id', None))
         title = request.args.get('title', None)
         content = request.args.get('content', None)
         if self.check_post(comment_id, auth.username()) and None not in [title, content]:
@@ -199,9 +200,9 @@ class CommentView(Resource, Serialize, CheckUser):
         :return: ошибку или подтверждение о удалении комментария
         QueryString параметры - comment_id
         """
-        comment_id = request.args.get('comment_id', None)
-        if self.check_post(comment_id, auth.username()):
-            data = db_session.query(Posts).filter_by(id=comment_id).first()
+        comment_id = int(request.args.get('comment_id', None))
+        if self.check_comment(comment_id, auth.username()):
+            data = db_session.query(Comments).filter_by(id=comment_id).first()
             db_session.delete(data)
             db_session.commit()
             return {'delete': 'True'}, 200
